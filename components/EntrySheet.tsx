@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Entry } from "@/lib/types";
-import { fmt } from "@/lib/format";
 import { sortedEntries } from "@/lib/storage";
+import { useLanguage } from "@/lib/LanguageContext";
+import { getLabel, fmtCurrency } from "@/lib/i18n";
 
 type Props = {
   open: boolean;
@@ -13,22 +14,27 @@ type Props = {
   onSubmit: (entry: Omit<Entry, "id">) => string | null;
 };
 
-function nextDefaults(entries: Entry[]) {
+function nextDefaults(entries: Entry[], language: any) {
   const s = sortedEntries(entries);
   if (s.length === 0) {
-    return { open: "", date: "", hint: "For the first entry, enter your starting balance as the 'Open' value." };
+    return { open: "", date: "", hint: getLabel("hint.firstEntry", language) };
   }
   const last = s[s.length - 1];
   const d = new Date(last.date);
   d.setDate(d.getDate() + 1);
+  const hintBase =
+    language === "ja"
+      ? `始値は前日の終値（${fmtCurrency(last.close, language)}）を自動で入力しています。修正も可能です。`
+      : `The Open value is auto-filled with the previous day's Close (${fmtCurrency(last.close, language)}). You can edit it.`;
   return {
     open: String(last.close),
     date: d.toISOString().slice(0, 10),
-    hint: `The Open value is auto-filled with the previous day's Close (${fmt(last.close)}). You can edit it.`,
+    hint: hintBase,
   };
 }
 
 export default function EntrySheet({ open, entries, onClose, onSubmit }: Props) {
+  const { language } = useLanguage();
   const [date, setDate] = useState("");
   const [openV, setOpenV] = useState("");
   const [highV, setHighV] = useState("");
@@ -40,7 +46,7 @@ export default function EntrySheet({ open, entries, onClose, onSubmit }: Props) 
 
   useEffect(() => {
     if (!open) return;
-    const d = nextDefaults(entries);
+    const d = nextDefaults(entries, language);
     setDate(d.date);
     setOpenV(d.open);
     setHint(d.hint);
@@ -49,7 +55,7 @@ export default function EntrySheet({ open, entries, onClose, onSubmit }: Props) 
     setCloseV("");
     setMemo("");
     setError("");
-  }, [open]);
+  }, [open, language]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -60,17 +66,17 @@ export default function EntrySheet({ open, entries, onClose, onSubmit }: Props) 
     const closeN = parseFloat(closeV);
 
     if ([openN, highN, lowN, closeN].some((v) => isNaN(v)) || !date) {
-      setError("Please fill in all required fields.");
+      setError(getLabel("error.fillRequired", language));
       return;
     }
     const maxV = Math.max(openN, closeN);
     const minV = Math.min(openN, closeN);
     if (highN < maxV || lowN > minV) {
-      setError("High must be >= open/close and Low must be <= open/close.");
+      setError(getLabel("error.highLowRange", language));
       return;
     }
     if (entries.some((x) => x.date === date)) {
-      setError("An entry for this date already exists. Delete it from the list before adding again.");
+      setError(getLabel("error.dateExists", language));
       return;
     }
 
@@ -104,7 +110,9 @@ export default function EntrySheet({ open, entries, onClose, onSubmit }: Props) 
         }
       >
         <div className="flex flex-shrink-0 items-center justify-between border-b border-line px-5 py-4">
-          <h2 className="m-0 text-[15px] font-semibold">Add a daily entry</h2>
+          <h2 className="m-0 text-[15px] font-semibold">
+            {getLabel("title.addEntry", language)}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -116,7 +124,7 @@ export default function EntrySheet({ open, entries, onClose, onSubmit }: Props) 
 
         <div className="flex-1 overflow-y-auto p-5">
           <form id="entryForm" onSubmit={handleSubmit}>
-            <Field label="Date">
+            <Field label={getLabel("label.date", language)}>
               <input
                 type="date"
                 required
@@ -126,7 +134,7 @@ export default function EntrySheet({ open, entries, onClose, onSubmit }: Props) 
               />
             </Field>
             <div className="mb-3.5 grid grid-cols-2 gap-3">
-              <Field label="Open (balance)">
+              <Field label={getLabel("label.open", language)}>
                 <input
                   type="number"
                   step="0.01"
@@ -137,7 +145,7 @@ export default function EntrySheet({ open, entries, onClose, onSubmit }: Props) 
                   className="input"
                 />
               </Field>
-              <Field label="Close (balance)">
+              <Field label={getLabel("label.close", language)}>
                 <input
                   type="number"
                   step="0.01"
@@ -150,7 +158,7 @@ export default function EntrySheet({ open, entries, onClose, onSubmit }: Props) 
               </Field>
             </div>
             <div className="mb-3.5 grid grid-cols-2 gap-3">
-              <Field label="High (balance)">
+              <Field label={getLabel("label.high", language)}>
                 <input
                   type="number"
                   step="0.01"
@@ -161,7 +169,7 @@ export default function EntrySheet({ open, entries, onClose, onSubmit }: Props) 
                   className="input"
                 />
               </Field>
-              <Field label="Low (balance)">
+              <Field label={getLabel("label.low", language)}>
                 <input
                   type="number"
                   step="0.01"
@@ -173,10 +181,10 @@ export default function EntrySheet({ open, entries, onClose, onSubmit }: Props) 
                 />
               </Field>
             </div>
-            <Field label="Memo (optional)">
+            <Field label={getLabel("label.memo", language)}>
               <input
                 type="text"
-                placeholder="e.g. USD/JPY scalping"
+                placeholder={getLabel("placeholder.memo", language)}
                 value={memo}
                 onChange={(e) => setMemo(e.target.value)}
                 className="input"
@@ -199,14 +207,14 @@ export default function EntrySheet({ open, entries, onClose, onSubmit }: Props) 
             onClick={onClose}
             className="flex-1 rounded-[9px] border border-line bg-panel2 py-3 text-[13.5px] font-semibold text-ink"
           >
-            Cancel
+            {getLabel("btn.cancel", language)}
           </button>
           <button
             type="submit"
             form="entryForm"
             className="flex-1 rounded-[9px] bg-ink py-3 text-[13.5px] font-semibold text-black"
           >
-            Add entry
+            {getLabel("btn.addEntry", language)}
           </button>
         </div>
       </div>

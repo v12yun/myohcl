@@ -1,11 +1,14 @@
 import { Entry } from "@/lib/types";
-import { fmt, fmtSigned, fmtPct } from "@/lib/format";
+import { fmtPct } from "@/lib/format";
+import { useLanguage } from "@/lib/LanguageContext";
+import { fmtCurrency, fmtCurrencySigned } from "@/lib/i18n";
 
 type Props = {
   entries: Entry[];
 };
 
 export default function TopBar({ entries }: Props) {
+  const { language } = useLanguage();
   const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
   const hasData = sorted.length > 0;
   const last = sorted[sorted.length - 1];
@@ -22,7 +25,7 @@ export default function TopBar({ entries }: Props) {
       </div>
       <div className="flex items-baseline gap-2.5">
         <span className="text-[16px] font-semibold tracking-tight sm:text-[19px]">
-          {hasData ? `$${fmt(last.close)}` : "—"}
+          {hasData ? fmtCurrency(last.close, language) : "—"}
         </span>
         {hasData && (
           <span
@@ -31,7 +34,7 @@ export default function TopBar({ entries }: Props) {
               (delta >= 0 ? "text-gain" : "text-loss")
             }
           >
-            {fmtSigned(delta)}（{fmtPct(pct)}）
+            {fmtCurrencySigned(delta, language)}（{fmtPct(pct)}）
           </span>
         )}
       </div>

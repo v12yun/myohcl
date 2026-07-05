@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { LanguageProvider } from "@/lib/LanguageContext";
 
 export const metadata: Metadata = {
   title: "MyOHCL",
@@ -19,7 +20,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

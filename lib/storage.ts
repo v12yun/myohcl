@@ -1,6 +1,8 @@
 import { Entry } from "./types";
+import { Language } from "./i18n";
 
 const STORAGE_KEY = "balance-ledger-entries";
+const LANGUAGE_KEY = "balance-ledger-language";
 
 export function loadEntries(): Entry[] {
   if (typeof window === "undefined") return [];
@@ -35,4 +37,23 @@ export function exportEntries(entries: Entry[]): void {
   a.download = "balance-ledger-backup.json";
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export function loadLanguage(): Language {
+  if (typeof window === "undefined") return "en";
+  try {
+    const raw = window.localStorage.getItem(LANGUAGE_KEY);
+    return (raw as Language) || "en";
+  } catch {
+    return "en";
+  }
+}
+
+export function saveLanguage(lang: Language): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LANGUAGE_KEY, lang);
+  } catch (e) {
+    console.error("Failed to save language", e);
+  }
 }

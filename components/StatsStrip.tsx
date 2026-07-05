@@ -1,11 +1,14 @@
 import { Entry } from "@/lib/types";
-import { fmt, fmtSigned } from "@/lib/format";
+import { fmtSigned } from "@/lib/format";
+import { useLanguage } from "@/lib/LanguageContext";
+import { getLabel, fmtCurrency, fmtCurrencySigned } from "@/lib/i18n";
 
 type Props = {
   entries: Entry[];
 };
 
 export default function StatsStrip({ entries }: Props) {
+  const { language } = useLanguage();
   const s = [...entries].sort((a, b) => a.date.localeCompare(b.date));
   if (s.length === 0) return <div className="flex-shrink-0 border-b border-line" />;
 
@@ -24,12 +27,33 @@ export default function StatsStrip({ entries }: Props) {
   });
 
   const cards: { k: string; v: string; cls?: string }[] = [
-    { k: "Days", v: `${s.length} days` },
-    { k: "Win rate", v: `${winRate.toFixed(1)}%` },
-    { k: "Wins/Losses", v: `${wins} / ${losses}` },
-    { k: "Best day", v: fmtSigned(best), cls: best >= 0 ? "text-gain" : "text-loss" },
-    { k: "Worst day", v: fmtSigned(worst), cls: worst >= 0 ? "text-gain" : "text-loss" },
-    { k: "Max DD", v: fmt(maxDD), cls: "text-loss" },
+    {
+      k: getLabel("stats.days", language),
+      v:
+        language === "ja"
+          ? `${s.length} ${getLabel("stats.daysValue", language)}`
+          : `${s.length} days`,
+    },
+    { k: getLabel("stats.winRate", language), v: `${winRate.toFixed(1)}%` },
+    {
+      k: getLabel("stats.winsLosses", language),
+      v: `${wins} / ${losses}`,
+    },
+    {
+      k: getLabel("stats.bestDay", language),
+      v: fmtCurrencySigned(best, language),
+      cls: best >= 0 ? "text-gain" : "text-loss",
+    },
+    {
+      k: getLabel("stats.worstDay", language),
+      v: fmtCurrencySigned(worst, language),
+      cls: worst >= 0 ? "text-gain" : "text-loss",
+    },
+    {
+      k: getLabel("stats.maxDD", language),
+      v: fmtCurrency(maxDD, language),
+      cls: "text-loss",
+    },
   ];
 
   return (

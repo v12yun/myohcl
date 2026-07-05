@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { X, Trash2 } from "lucide-react";
 import { Entry } from "@/lib/types";
-import { fmt, fmtSigned, fmtPct } from "@/lib/format";
+import { fmtPct } from "@/lib/format";
 import { sortedEntries } from "@/lib/storage";
+import { useLanguage } from "@/lib/LanguageContext";
+import { getLabel, fmtCurrency, fmtCurrencySigned } from "@/lib/i18n";
 
 type Props = {
   open: boolean;
@@ -14,6 +16,7 @@ type Props = {
 };
 
 export default function LogSheet({ open, entries, onClose, onDelete }: Props) {
+  const { language } = useLanguage();
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const s = sortedEntries(entries).slice().reverse();
 
@@ -33,7 +36,9 @@ export default function LogSheet({ open, entries, onClose, onDelete }: Props) {
         }
       >
         <div className="flex flex-shrink-0 items-center justify-between border-b border-line px-5 py-4">
-          <h2 className="m-0 text-[15px] font-semibold">Entries</h2>
+          <h2 className="m-0 text-[15px] font-semibold">
+            {getLabel("title.entries", language)}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -46,7 +51,7 @@ export default function LogSheet({ open, entries, onClose, onDelete }: Props) {
         <div className="flex-1 overflow-y-auto p-5">
           {s.length === 0 && (
             <div className="py-10 text-center text-[13px] text-muted">
-              No entries yet
+              {getLabel("empty.noEntries", language)}
             </div>
           )}
           {s.map((e) => {
@@ -63,7 +68,7 @@ export default function LogSheet({ open, entries, onClose, onDelete }: Props) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-muted">
-                    O{fmt(e.open)} H{fmt(e.high)} L{fmt(e.low)} C{fmt(e.close)}
+                    O{fmtCurrency(e.open, language)} H{fmtCurrency(e.high, language)} L{fmtCurrency(e.low, language)} C{fmtCurrency(e.close, language)}
                   </div>
                   {e.memo && (
                     <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] text-[#8a8a8a]">
@@ -73,13 +78,13 @@ export default function LogSheet({ open, entries, onClose, onDelete }: Props) {
                 </div>
                 <div className="flex-shrink-0 text-right">
                   <div className={"text-[13.5px] font-semibold " + colorCls}>
-                    {fmtSigned(pnl)}
+                    {fmtCurrencySigned(pnl, language)}
                   </div>
                   <div className={"text-[11px] " + colorCls}>{fmtPct(pct)}</div>
                 </div>
                 <button
                   type="button"
-                  title="Delete"
+                  title={getLabel("btn.delete", language)}
                   onClick={() => setPendingDelete(e.id)}
                   className="flex flex-shrink-0 items-center justify-center rounded-[7px] p-1.5 text-[#555] hover:bg-loss/10 hover:text-loss"
                 >
@@ -101,14 +106,16 @@ export default function LogSheet({ open, entries, onClose, onDelete }: Props) {
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-sm rounded-xl border border-line bg-panel p-5"
           >
-            <div className="mb-4 text-[14px]">Delete this entry?</div>
+            <div className="mb-4 text-[14px]">
+              {getLabel("confirm.deleteEntry", language)}
+            </div>
             <div className="flex gap-2.5">
               <button
                 type="button"
                 onClick={() => setPendingDelete(null)}
                 className="flex-1 rounded-[9px] border border-line bg-panel2 py-2.5 text-[13.5px] font-semibold"
               >
-                Cancel
+                {getLabel("btn.cancel", language)}
               </button>
               <button
                 type="button"
@@ -118,7 +125,7 @@ export default function LogSheet({ open, entries, onClose, onDelete }: Props) {
                 }}
                 className="flex-1 rounded-[9px] bg-loss py-2.5 text-[13.5px] font-semibold text-white"
               >
-                Delete
+                {getLabel("btn.delete", language)}
               </button>
             </div>
           </div>

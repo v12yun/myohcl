@@ -7,13 +7,18 @@ import AssetChart from "@/components/AssetChart";
 import BottomBar from "@/components/BottomBar";
 import EntrySheet from "@/components/EntrySheet";
 import LogSheet from "@/components/LogSheet";
+import SettingsSheet from "@/components/SettingsSheet";
 import { Entry } from "@/lib/types";
 import { loadEntries, saveEntries, exportEntries } from "@/lib/storage";
+import { useLanguage } from "@/lib/LanguageContext";
+import { getLabel } from "@/lib/i18n";
 
 export default function Home() {
+  const { language } = useLanguage();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [formOpen, setFormOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -38,7 +43,7 @@ export default function Home() {
 
   function handleExport() {
     if (entries.length === 0) {
-      alert("No records to export.");
+      alert(getLabel("empty.noRecordsToExport", language));
       return;
     }
     exportEntries(entries);
@@ -55,6 +60,7 @@ export default function Home() {
         onOpenLog={() => setLogOpen(true)}
         onExport={handleExport}
         onOpenForm={() => setFormOpen(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
 
       <EntrySheet
@@ -68,6 +74,10 @@ export default function Home() {
         entries={entries}
         onClose={() => setLogOpen(false)}
         onDelete={handleDelete}
+      />
+      <SettingsSheet
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
       />
     </div>
   );

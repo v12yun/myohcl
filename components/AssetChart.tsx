@@ -11,19 +11,24 @@ import {
   CrosshairMode,
 } from "lightweight-charts";
 import { Entry } from "@/lib/types";
-import { fmt, fmtSigned, fmtPct } from "@/lib/format";
+import { fmtPct } from "@/lib/format";
+import { useLanguage } from "@/lib/LanguageContext";
+import { getLabel, fmtCurrency, fmtCurrencySigned } from "@/lib/i18n";
 
 type Props = {
   entries: Entry[];
 };
 
 export default function AssetChart({ entries }: Props) {
+  const { language } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const entriesRef = useRef<Entry[]>(entries);
+  const languageRef = useRef<typeof language>(language);
   entriesRef.current = entries;
+  languageRef.current = language;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -103,12 +108,18 @@ export default function AssetChart({ entries }: Props) {
       const pnl = data.close - data.open;
       const pct = data.open !== 0 ? (pnl / data.open) * 100 : 0;
       const color = pnl >= 0 ? "#3ecf8e" : "#ef5350";
+      const lang = languageRef.current;
+      const openLabel = lang === "ja" ? "始値" : "Open";
+      const highLabel = lang === "ja" ? "高値" : "High";
+      const lowLabel = lang === "ja" ? "安値" : "Low";
+      const closeLabel = lang === "ja" ? "終値" : "Close";
+      const pnlLabel = getLabel("chart.pnl", lang);
       tooltip.innerHTML = `
         <div style="color:#ccc;margin-bottom:4px;">${data.time}${match?.memo ? " — " + escapeHtml(match.memo) : ""
         }</div>
-        Open ${fmt(data.open)}  High ${fmt(data.high)}<br>
-        Low ${fmt(data.low)}  Close ${fmt(data.close)}<br>
-        <span style="color:${color}">P/L ${fmtSigned(pnl)} (${fmtPct(pct)})</span>`;
+        ${openLabel} ${fmtCurrency(data.open, lang)}  ${highLabel} ${fmtCurrency(data.high, lang)}<br>
+        ${lowLabel} ${fmtCurrency(data.low, lang)}  ${closeLabel} ${fmtCurrency(data.close, lang)}<br>
+        <span style="color:${color}">${pnlLabel} ${fmtCurrencySigned(pnl, lang)} (${fmtPct(pct)})</span>`;
       const containerRect = container.getBoundingClientRect();
       const left = Math.min(
         param.point.x + containerRect.left + 16,
@@ -165,9 +176,9 @@ export default function AssetChart({ entries }: Props) {
       {entries.length === 0 && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3.5 px-8 text-center text-[13.5px] text-muted">
           <div className="text-[15px] font-medium text-ink">
-            No entries yet
+            {getLabel("empty.noEntries", language)}
           </div>
-          <div>Please use the "+ Add entry" button below to enter the first day's open, high, low, and close.</div>
+          <div>{getLabel("empty.noEntriesDesc", language)}</div>
         </div>
       )}
       <div ref={containerRef} className="h-full w-full" />
